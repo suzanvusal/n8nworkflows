@@ -1537,8 +1537,8 @@ def generate_html_documentation(data: Dict[str, Any]) -> str:
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn" id="downloadSvg">⬇️ Download SVG</button>
-                <button class="btn" id="downloadPng">⬇️ Download PNG</button>
+                <!--  <button class="btn" id="downloadSvg">⬇️ Download SVG</button> -->
+                <!-- <button class="btn" id="downloadPng">⬇️ Download PNG</button>  -->
             </div>
         </div>
     </div>
