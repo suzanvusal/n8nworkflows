@@ -1558,26 +1558,30 @@ def generate_html_documentation(data: Dict[str, Any]) -> str:
         .diagram-content {
             max-width: 100%;
             overflow: auto;
-        }
-        .workflow-diagram-container {
+        }        .workflow-diagram-container {
             position: relative;
             margin: 15px 0;
-            min-height: 100px;
-        }        .workflow-diagram-loading {
+            min-height: 200px; /* Give more space for diagram */
+        }.workflow-diagram-loading {
             text-align: center;
             padding: 20px;
             color: var(--text-muted);
             font-style: italic;
-        }
-        .workflow-diagram {
+        }        .workflow-diagram {
             margin: 15px 0;
             padding: 15px;
             background: white;
             border-radius: 8px;
             overflow: auto;
+            min-height: 150px;
         }
         .dark-mode .workflow-diagram {
             background: #2d3748;
+        }
+        /* Add styles for the mermaid diagrams */
+        .workflow-diagram .mermaid {
+            width: 100%;
+            overflow: visible;
         }
         .mermaid-container {
             min-height: 200px;
@@ -1615,6 +1619,32 @@ def generate_html_documentation(data: Dict[str, Any]) -> str:
                 script.onerror = reject;
                 document.head.appendChild(script);
             });
+        }
+        
+        // Function to render a Mermaid diagram with unique ID to avoid conflicts
+        function renderMermaidDiagram(container, diagramCode) {
+            // Create a unique ID for this diagram instance
+            const diagramId = 'diagram-' + Math.random().toString(36).substring(2, 10);
+            
+            // Create a new div with the unique ID
+            const diagramDiv = document.createElement('div');
+            diagramDiv.id = diagramId;
+            diagramDiv.className = 'mermaid';
+            diagramDiv.textContent = diagramCode;
+            
+            // Clear existing content and append the new div
+            container.innerHTML = '';
+            container.appendChild(diagramDiv);
+            
+            // Render the diagram
+            try {
+                window.mermaid.init(undefined, document.getElementById(diagramId));
+                return true;
+            } catch (error) {
+                console.error('Error rendering diagram:', error);
+                container.innerHTML = '<div class="error-message">Error rendering diagram. Please try again.</div>';
+                return false;
+            }
         }
         
         // Embedded workflow data from Python analysis
@@ -1742,7 +1772,8 @@ def generate_html_documentation(data: Dict[str, Any]) -> str:
                             </div>                        </div>
                         <div class="workflow-details">                            <!-- Workflow Diagram Visualization -->
                             <div class="details-section">
-                                <h4 class="details-title">Workflow Diagram</h4>                                <div class="workflow-diagram-container" data-diagram="${encodeURIComponent(workflow.diagram)}">
+                                <h4 class="details-title">Workflow Diagram</h4>
+                                <div class="workflow-diagram-container" data-diagram="${encodeURIComponent(workflow.diagram)}">
                                     <div class="workflow-diagram-loading">Loading diagram...</div>
                                     <div class="workflow-diagram"></div>
                                 </div>
@@ -1807,20 +1838,19 @@ def generate_html_documentation(data: Dict[str, Any]) -> str:
                         if (card.classList.contains('expanded')) {
                             const diagramContainer = card.querySelector('.workflow-diagram-container');
                             const diagramElement = card.querySelector('.workflow-diagram');
+                            const loadingElement = card.querySelector('.workflow-diagram-loading');
                             
-                            if (diagramContainer && diagramElement && !diagramElement.innerHTML) {
-                                const loadingElement = card.querySelector('.workflow-diagram-loading');
+                            if (diagramContainer && diagramElement) {
                                 if (loadingElement) loadingElement.style.display = 'block';
                                 
-                                // Load Mermaid.js if needed then render the diagram
+                                // Load Mermaid.js if needed then render the diagram with unique ID
                                 loadMermaidIfNeeded().then(() => {
-                                    try {                                const diagramCode = decodeURIComponent(diagramContainer.dataset.diagram);
-                                        diagramElement.innerHTML = diagramCode;
-                                        window.mermaid.init(undefined, diagramElement);
-                                        if (loadingElement) loadingElement.style.display = 'none';
-                                    } catch (error) {
-                                        console.error('Error rendering diagram:', error);
-                                        if (loadingElement) loadingElement.innerHTML = 'Error loading diagram';
+                                    const diagramCode = decodeURIComponent(diagramContainer.dataset.diagram);
+                                    // Render the diagram using our helper function
+                                    const success = renderMermaidDiagram(diagramElement, diagramCode);
+                                    if (loadingElement) loadingElement.style.display = 'none';
+                                    if (!success && loadingElement) {
+                                        loadingElement.innerHTML = 'Error loading diagram';
                                     }
                                 });
                             }
@@ -1923,8 +1953,7 @@ def generate_html_documentation(data: Dict[str, Any]) -> str:
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);            }
-            
-            showMermaidModal(workflowName) {
+              showMermaidModal(workflowName) {
                 const workflow = this.workflows.find(w => w.name === workflowName);
                 if (!workflow) return;
                 
@@ -1938,24 +1967,8 @@ def generate_html_documentation(data: Dict[str, Any]) -> str:
 
                 // Load Mermaid.js if needed then render the diagram
                 loadMermaidIfNeeded().then(() => {
-                    diagramElement.innerHTML = workflow.diagram;
-                    
-                    // Render the diagram
-                    window.mermaid.initialize({
-                        startOnLoad: false,
-                        theme: 'default',
-                        flowchart: {
-                            useMaxWidth: true,
-                            htmlLabels: true,
-                            curve: 'basis'
-                        },                        securityLevel: 'loose'
-                    });
-                    try {
-                        window.mermaid.init(undefined, document.getElementById('mermaidDiagram'));
-                    } catch (error) {
-                        console.error('Error rendering diagram:', error);
-                        diagramElement.innerHTML = '<div class="error-message">Error rendering diagram. Please try again.</div>';
-                    }
+                    // Use our improved rendering function
+                    renderMermaidDiagram(diagramElement, workflow.diagram);
                 });
             }
 
@@ -2025,9 +2038,7 @@ def generate_html_documentation(data: Dict[str, Any]) -> str:
                 ${nodes}
                 ${connections}
                 `;
-            }
-
-            toggleTheme() {
+            }            toggleTheme() {
                 const body = document.body;
                 body.classList.toggle('dark-mode');
                 
@@ -2038,6 +2049,32 @@ def generate_html_documentation(data: Dict[str, Any]) -> str:
                 // Update button text
                 const toggleButton = document.getElementById('themeToggle');
                 toggleButton.textContent = isDarkMode ? '🌞 Light' : '🌙 Dark';
+                
+                // Update Mermaid theme if it's loaded
+                if (window.mermaid) {
+                    // Re-initialize with the appropriate theme
+                    window.mermaid.initialize({
+                        startOnLoad: false,
+                        theme: isDarkMode ? 'dark' : 'default',
+                        flowchart: {
+                            useMaxWidth: true,
+                            htmlLabels: true,
+                            curve: 'basis'
+                        },
+                        securityLevel: 'loose'
+                    });
+                    
+                    // Re-render any visible diagrams
+                    const expandedCards = document.querySelectorAll('.workflow-card.expanded');
+                    expandedCards.forEach(card => {
+                        const diagramContainer = card.querySelector('.workflow-diagram-container');
+                        const diagramElement = card.querySelector('.workflow-diagram');
+                        if (diagramContainer && diagramElement) {
+                            const diagramCode = decodeURIComponent(diagramContainer.dataset.diagram);
+                            renderMermaidDiagram(diagramElement, diagramCode);
+                        }
+                    });
+                }
             }
 
             hideLoading() {
