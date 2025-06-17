@@ -13,6 +13,7 @@ import json
 import os
 import glob
 import datetime
+import re  # Added for regex support
 from typing import Dict, List, Any, Optional, Tuple, Set
 
 # Constants
@@ -112,14 +113,15 @@ class WorkflowAnalyzer:
         
         # Generate description
         workflow['description'] = self._generate_description(workflow, trigger_type, integrations)
-        
-        # Extract or generate step-by-step process
+          # Extract or generate step-by-step process
         steps = self._extract_or_generate_steps(workflow['nodes'], workflow['connections'])
         workflow['steps'] = steps
         
         # Debug logging
         if steps:
             print(f"Found/Generated {len(steps)} steps in workflow: {workflow['name']}")
+          # Generate workflow diagram code using mermaid.js (will be rendered on-demand)
+        workflow['diagram'] = self._generate_workflow_diagram(workflow['nodes'], workflow['connections'])
         
         # Extract raw JSON for viewer
         workflow['rawJson'] = json.dumps(data, indent=2)
@@ -202,7 +204,7 @@ class WorkflowAnalyzer:
         if len(integrations) > 3:
             desc += f" and integrates with {len(integrations)} services"
         
-        desc += "."
+        desc += ".";
         
         return desc
     
@@ -443,13 +445,88 @@ class WorkflowAnalyzer:
                 'inactive': 0,
                 'triggers': {},
                 'complexity': {'low': 0, 'medium': 0, 'high': 0},
-                'total_nodes': 0,
-                'unique_integrations': 0,
+                'total_nodes': 0,                'unique_integrations': 0,
                 'integrations': []
             },
             'timestamp': datetime.datetime.now().isoformat()
         }
-
+    
+    def _generate_workflow_diagram(self, nodes: List[Dict], connections: Dict) -> str:
+        """
+        Generate a mermaid.js workflow diagram showing node connections.
+        
+        Args:
+            nodes: List of workflow nodes
+            connections: Dictionary of workflow connections
+        
+        Returns:
+            str: Mermaid.js flowchart markup
+        """
+        if not nodes:
+            return "graph TD\n  EmptyWorkflow[No nodes found in workflow]"
+        
+        # Create mapping for node names to ensure valid mermaid IDs
+        mermaid_ids = {}
+        for i, node in enumerate(nodes):
+            node_id = f"node{i}"
+            node_name = node.get('name', f'Node {i}')
+            mermaid_ids[node_name] = node_id
+          # Start building the mermaid diagram
+        mermaid_code = ["graph TD"]
+        
+        # Add nodes with styling
+        for node in nodes:
+            node_name = node.get('name', 'Unnamed')
+            node_id = mermaid_ids[node_name]
+            node_type = node.get('type', '').replace('n8n-nodes-base.', '')
+            
+            # Determine node style based on type
+            style = ""
+            if any(x in node_type.lower() for x in ['trigger', 'webhook', 'cron']):
+                style = "fill:#b3e0ff,stroke:#0066cc"  # Blue for triggers
+            elif any(x in node_type.lower() for x in ['if', 'switch']):
+                style = "fill:#ffffb3,stroke:#e6e600"  # Yellow for conditional nodes
+            elif any(x in node_type.lower() for x in ['function', 'code']):
+                style = "fill:#d9b3ff,stroke:#6600cc"  # Purple for code nodes
+            elif 'error' in node_type.lower():
+                style = "fill:#ffb3b3,stroke:#cc0000"  # Red for error handlers
+            else:
+                style = "fill:#d9d9d9,stroke:#666666"  # Gray for other nodes
+            
+            # Add node with label (escaping special characters)
+            # Use HTML line break instead of \n for better compatibility
+            clean_name = node_name.replace('"', "'")
+            clean_type = node_type.replace('"', "'")
+            label = f"{clean_name}<br>({clean_type})"
+            mermaid_code.append(f"  {node_id}[\"{label}\"]")
+            mermaid_code.append(f"  style {node_id} {style}")
+        
+        # Add connections between nodes correctly based on n8n connection structure
+        for source_name, source_connections in connections.items():
+            if source_name not in mermaid_ids:
+                continue
+            
+            if isinstance(source_connections, dict) and 'main' in source_connections:
+                main_connections = source_connections['main']
+                
+                for i, output_connections in enumerate(main_connections):
+                    if not isinstance(output_connections, list):
+                        continue
+                        
+                    for connection in output_connections:
+                        if not isinstance(connection, dict) or 'node' not in connection:
+                            continue
+                            
+                        target_name = connection['node']
+                        if target_name not in mermaid_ids:
+                            continue
+                            
+                        # Add arrow with output index if multiple outputs
+                        label = f" -->|{i}| " if len(main_connections) > 1 else " --> "
+                        mermaid_code.append(f"  {mermaid_ids[source_name]}{label}{mermaid_ids[target_name]}")
+          # Format the final mermaid diagram code
+        return "\n".join(mermaid_code)
+                
 
 def generate_html_documentation(data: Dict[str, Any]) -> str:
     """Generate the complete HTML documentation with embedded data."""
@@ -1415,9 +1492,7 @@ def generate_html_documentation(data: Dict[str, Any]) -> str:
             <h3>No workflows found</h3>
             <p>Try adjusting your search terms or filters</p>
         </div>
-    </div>
-
-    <!-- JSON Viewer Modal -->
+    </div>    <!-- JSON Viewer Modal -->
     <div id="jsonModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1433,8 +1508,145 @@ def generate_html_documentation(data: Dict[str, Any]) -> str:
             </div>
         </div>
     </div>
+    
+    <!-- Diagram Viewer Modal -->
+    <div id="diagramModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="diagramModalTitle">Workflow Visualization</h2>
+                <button class="close-btn" id="closeDiagramModal">&times;</button>
+            </div>
+            <div class="modal-body diagram-container">
+                <div id="diagramViewer" class="diagram-content"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" id="downloadSvg">💾 Download SVG</button>
+            </div>
+        </div>
+    </div>
 
-    <script>
+    <!-- Mermaid.js Workflow Visualization Modal -->
+    <div id="mermaidModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="mermaidModalTitle">Workflow Visualization</h2>
+                <button class="close-btn" id="closeMermaidModal">&times;</button>
+            </div>            <div class="modal-body">
+                <div id="mermaidDiagram" class="mermaid-container">
+                    <!-- Mermaid diagram will be inserted here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <!--  <button class="btn" id="downloadSvg">⬇️ Download SVG</button> -->
+                <!-- <button class="btn" id="downloadPng">⬇️ Download PNG</button>  -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>    <!-- Load Mermaid.js only when needed for better performance -->
+    <style>
+        .diagram-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background: white;
+        }
+        .dark-mode .diagram-container {
+            background: var(--dark-bg);
+        }
+        .diagram-content {
+            max-width: 100%;
+            overflow: auto;
+        }        .workflow-diagram-container {
+            position: relative;
+            margin: 15px 0;
+            min-height: 200px; /* Give more space for diagram */
+        }.workflow-diagram-loading {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+            font-style: italic;
+        }        .workflow-diagram {
+            margin: 15px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            overflow: auto;
+            min-height: 150px;
+        }
+        .dark-mode .workflow-diagram {
+            background: #2d3748;
+        }
+        /* Add styles for the mermaid diagrams */
+        .workflow-diagram .mermaid {
+            width: 100%;
+            overflow: visible;
+        }
+        .mermaid-container {
+            min-height: 200px;
+            padding: 20px;
+            text-align: center;
+        }
+        .error-message {
+            color: var(--error-color);
+            padding: 20px;
+            text-align: center;
+        }
+    </style>
+    <script>        // Function to load Mermaid.js on-demand
+        function loadMermaidIfNeeded() {
+            if (window.mermaid) {
+                return Promise.resolve();
+            }
+            
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = "https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js";
+                script.onload = () => {
+                    window.mermaid.initialize({
+                        startOnLoad: false,
+                        theme: 'default',
+                        flowchart: {
+                            useMaxWidth: true,
+                            htmlLabels: true,
+                            curve: 'basis'
+                        },
+                        securityLevel: 'loose'
+                    });
+                    resolve();
+                };
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+        
+        // Function to render a Mermaid diagram with unique ID to avoid conflicts
+        function renderMermaidDiagram(container, diagramCode) {
+            // Create a unique ID for this diagram instance
+            const diagramId = 'diagram-' + Math.random().toString(36).substring(2, 10);
+            
+            // Create a new div with the unique ID
+            const diagramDiv = document.createElement('div');
+            diagramDiv.id = diagramId;
+            diagramDiv.className = 'mermaid';
+            diagramDiv.textContent = diagramCode;
+            
+            // Clear existing content and append the new div
+            container.innerHTML = '';
+            container.appendChild(diagramDiv);
+            
+            // Render the diagram
+            try {
+                window.mermaid.init(undefined, document.getElementById(diagramId));
+                return true;
+            } catch (error) {
+                console.error('Error rendering diagram:', error);
+                container.innerHTML = '<div class="error-message">Error rendering diagram. Please try again.</div>';
+                return false;
+            }
+        }
+        
         // Embedded workflow data from Python analysis
         const WORKFLOW_DATA = ''' + js_data + ''';
 
@@ -1557,10 +1769,16 @@ def generate_html_documentation(data: Dict[str, Any]) -> str:
                                     ${integrations}
                                     ${workflow.integrations.length > 5 ? `<span class="integration-tag">+${workflow.integrations.length - 5} more</span>` : ''}
                                 </div>
+                            </div>                        </div>
+                        <div class="workflow-details">                            <!-- Workflow Diagram Visualization -->
+                            <div class="details-section">
+                                <h4 class="details-title">Workflow Diagram</h4>
+                                <div class="workflow-diagram-container" data-diagram="${encodeURIComponent(workflow.diagram)}">
+                                    <div class="workflow-diagram-loading">Loading diagram...</div>
+                                    <div class="workflow-diagram"></div>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <div class="workflow-details">
+                            
                             ${stepsSection}
                             ${workflow.tags.length > 0 ? `
                                 <div class="details-section">
@@ -1580,10 +1798,10 @@ def generate_html_documentation(data: Dict[str, Any]) -> str:
                             ` : ''}
                         </div>
 
-                        <div class="workflow-footer">
-                            <div class="action-buttons">
+                        <div class="workflow-footer">                            <div class="action-buttons">
                                 <button class="btn toggle-details">View Details</button>
                                 <button class="btn view-json" data-workflow-name="${workflow.name}" data-filename="${workflow.filename}">View File</button>
+                                <button class="btn view-visualization" data-workflow-name="${workflow.name}">View Diagram</button>
                             </div>
                         </div>
                     </div>
@@ -1611,17 +1829,43 @@ def generate_html_documentation(data: Dict[str, Any]) -> str:
                 document.getElementById('themeToggle').addEventListener('click', this.toggleTheme);
 
                 // Workflow card interactions
-                document.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('toggle-details')) {
+                document.addEventListener('click', (e) => {                    if (e.target.classList.contains('toggle-details')) {
                         const card = e.target.closest('.workflow-card');
                         card.classList.toggle('expanded');
                         e.target.textContent = card.classList.contains('expanded') ? 'Hide Details' : 'View Details';
+                        
+                        // Lazy load and render the diagram if details are expanded
+                        if (card.classList.contains('expanded')) {
+                            const diagramContainer = card.querySelector('.workflow-diagram-container');
+                            const diagramElement = card.querySelector('.workflow-diagram');
+                            const loadingElement = card.querySelector('.workflow-diagram-loading');
+                            
+                            if (diagramContainer && diagramElement) {
+                                if (loadingElement) loadingElement.style.display = 'block';
+                                
+                                // Load Mermaid.js if needed then render the diagram with unique ID
+                                loadMermaidIfNeeded().then(() => {
+                                    const diagramCode = decodeURIComponent(diagramContainer.dataset.diagram);
+                                    // Render the diagram using our helper function
+                                    const success = renderMermaidDiagram(diagramElement, diagramCode);
+                                    if (loadingElement) loadingElement.style.display = 'none';
+                                    if (!success && loadingElement) {
+                                        loadingElement.innerHTML = 'Error loading diagram';
+                                    }
+                                });
+                            }
+                        }
                     }
 
                     if (e.target.classList.contains('view-json')) {
                         const workflowName = e.target.dataset.workflowName;
                         const filename = e.target.dataset.filename;
                         this.showJsonModal(workflowName, filename);
+                    }
+
+                    if (e.target.classList.contains('view-visualization')) {
+                        const workflowName = e.target.dataset.workflowName;
+                        this.showMermaidModal(workflowName);
                     }
                 });
 
@@ -1633,9 +1877,20 @@ def generate_html_documentation(data: Dict[str, Any]) -> str:
                 document.getElementById('copyJson').addEventListener('click', this.copyJsonToClipboard);
                 document.getElementById('downloadJson').addEventListener('click', this.downloadJson);
 
+                // Mermaid modal functionality
+                document.getElementById('closeMermaidModal').addEventListener('click', this.hideMermaidModal);
+                document.getElementById('mermaidModal').addEventListener('click', (e) => {
+                    if (e.target === e.currentTarget) this.hideMermaidModal();
+                });
+                document.getElementById('downloadSvg').addEventListener('click', this.downloadSvg);
+                document.getElementById('downloadPng').addEventListener('click', this.downloadPng);
+
                 // Escape key to close modal
                 document.addEventListener('keydown', (e) => {
-                    if (e.key === 'Escape') this.hideJsonModal();
+                    if (e.key === 'Escape') {
+                        this.hideJsonModal();
+                        this.hideMermaidModal();
+                    }
                 });
             }
 
@@ -1697,38 +1952,149 @@ def generate_html_documentation(data: Dict[str, Any]) -> str:
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
+                URL.revokeObjectURL(url);            }
+              showMermaidModal(workflowName) {
+                const workflow = this.workflows.find(w => w.name === workflowName);
+                if (!workflow) return;
+                
+                document.getElementById('mermaidModalTitle').textContent = `${workflowName} - Visualization`;
+                
+                // Show the modal and loading indicator
+                const diagramElement = document.getElementById('mermaidDiagram');
+                diagramElement.innerHTML = '<div class="workflow-diagram-loading">Loading diagram...</div>';
+                document.getElementById('mermaidModal').style.display = 'block';
+                document.body.style.overflow = 'hidden';
+
+                // Load Mermaid.js if needed then render the diagram
+                loadMermaidIfNeeded().then(() => {
+                    // Use our improved rendering function
+                    renderMermaidDiagram(diagramElement, workflow.diagram);
+                });
+            }
+
+            hideMermaidModal() {
+                document.getElementById('mermaidModal').style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+
+            downloadSvg() {
+                this.downloadDiagram('svg');
+            }
+
+            downloadPng() {
+                this.downloadDiagram('png');
+            }
+
+            downloadDiagram(format) {
+                const workflowName = document.getElementById('mermaidModalTitle').textContent.split(' - ')[0];
+                const svgElement = document.getElementById('mermaidDiagram').querySelector('svg');
+                
+                if (!svgElement) {
+                    alert('No diagram available to download');
+                    return;
+                }
+
+                // Serialize SVG element to string
+                const serializer = new XMLSerializer();
+                let svgString = serializer.serializeToString(svgElement);
+
+                // Fix for Firefox: add XML declaration
+                if (format === 'svg' && !svgString.startsWith('<?xml')) {
+                    svgString = '<?xml version="1.0" encoding="UTF-8"?>' + svgString;
+                }
+
+                const blob = new Blob([svgString], { type: format === 'svg' ? 'image/svg+xml' : 'image/png' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${workflowName}.${format}`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
                 URL.revokeObjectURL(url);
             }
 
-            toggleTheme() {
-                document.body.classList.toggle('dark-mode');
-                const isDark = document.body.classList.contains('dark-mode');
-                document.getElementById('themeToggle').textContent = isDark ? '☀️ Light' : '🌙 Dark';
-                localStorage.setItem('darkMode', isDark);
+            generateMermaidCode(workflow) {
+                // Basic node and connection handling
+                let nodes = workflow.nodes.map(node => {
+                    return `    ${node.id}[("${node.name.replace(/"/g, '\\"')}")]\n`;
+                }).join('');
+
+                let connections = '';
+                for (const [source, targets] of Object.entries(workflow.connections)) {
+                    if (typeof targets === 'object' && targets.main) {
+                        targets.main.forEach(target => {
+                            if (Array.isArray(target)) {
+                                target.forEach(conn => {
+                                    connections += `    ${conn.node} --> ${source}\n`;
+                                });
+                            }
+                        });
+                    }
+                }
+
+                return `%%{init: {'theme': 'default', 'flowchart': {'curve': 'linear'}}}%%
+                graph TD;
+                ${nodes}
+                ${connections}
+                `;
+            }            toggleTheme() {
+                const body = document.body;
+                body.classList.toggle('dark-mode');
+                
+                // Save theme preference to localStorage
+                const isDarkMode = body.classList.contains('dark-mode');
+                localStorage.setItem('darkMode', isDarkMode);
+                
+                // Update button text
+                const toggleButton = document.getElementById('themeToggle');
+                toggleButton.textContent = isDarkMode ? '🌞 Light' : '🌙 Dark';
+                
+                // Update Mermaid theme if it's loaded
+                if (window.mermaid) {
+                    // Re-initialize with the appropriate theme
+                    window.mermaid.initialize({
+                        startOnLoad: false,
+                        theme: isDarkMode ? 'dark' : 'default',
+                        flowchart: {
+                            useMaxWidth: true,
+                            htmlLabels: true,
+                            curve: 'basis'
+                        },
+                        securityLevel: 'loose'
+                    });
+                    
+                    // Re-render any visible diagrams
+                    const expandedCards = document.querySelectorAll('.workflow-card.expanded');
+                    expandedCards.forEach(card => {
+                        const diagramContainer = card.querySelector('.workflow-diagram-container');
+                        const diagramElement = card.querySelector('.workflow-diagram');
+                        if (diagramContainer && diagramElement) {
+                            const diagramCode = decodeURIComponent(diagramContainer.dataset.diagram);
+                            renderMermaidDiagram(diagramElement, diagramCode);
+                        }
+                    });
+                }
             }
 
             hideLoading() {
                 document.getElementById('loadingIndicator').style.display = 'none';
-                document.getElementById('workflowGrid').style.display = 'grid';
             }
         }
 
-        // Initialize the application
-        document.addEventListener('DOMContentLoaded', () => {
-            // Load saved theme preference
-            if (localStorage.getItem('darkMode') === 'true') {
-                document.body.classList.add('dark-mode');
-                document.getElementById('themeToggle').textContent = '☀️ Light';
-            }
+        // Initialize documentation viewer
+        const docViewer = new WorkflowDocumentation();
 
-            // Initialize the documentation
-            new WorkflowDocumentation();
-        });
+        // Load dark mode preference from localStorage
+        const isDarkMode = localStorage.getItem('darkMode') === 'true';
+        if (isDarkMode) {
+            document.body.classList.add('dark-mode');
+            document.getElementById('themeToggle').textContent = '🌞 Light';        }
     </script>
 </body>
-</html>'''
-    
-    return html_template
+</html>
+'''
+    return html_template.strip()
 
 
 def main():
@@ -1743,18 +2109,17 @@ def main():
     data = analyzer.analyze_all_workflows()
     
     # Generate HTML
-    print("📝 Generating HTML documentation...")
-    html_content = generate_html_documentation(data)
+    html = generate_html_documentation(data)
     
-    # Write HTML file
-    output_file = "workflow-documentation.html"
-    with open(output_file, 'w', encoding='utf-8') as f:
-        f.write(html_content)
+    # Write to file
+    output_path = "workflow-documentation.html"
+    with open(output_path, 'w', encoding='utf-8') as f:
+        f.write(html)
     
-    print(f"✅ Documentation generated successfully!")
-    print(f"📄 Output file: {output_file}")
-    print(f"📊 Analyzed {data['stats']['total']} workflows")
-    print(f"🔗 Open {output_file} in your browser to view the documentation")
+    print(f"✅ Documentation generated successfully: {output_path}")
+    print(f"   - {data['stats']['total']} workflows analyzed")
+    print(f"   - {data['stats']['active']} active workflows")
+    print(f"   - {data['stats']['unique_integrations']} unique integrations")
 
 
 if __name__ == "__main__":
