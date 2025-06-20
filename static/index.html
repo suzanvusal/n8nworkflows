@@ -108,27 +108,24 @@
             position: sticky;
             top: 0;
             z-index: 100;
-            backdrop-filter: blur(10px);
         }
 
         .search-section {
             display: flex;
-            gap: 1rem;
             align-items: center;
-            flex-wrap: wrap;
+            gap: 1rem;
             margin-bottom: 1rem;
         }
 
         .search-input {
             flex: 1;
-            min-width: 300px;
             padding: 0.75rem 1rem;
-            border: 2px solid var(--border);
+            border: 1px solid var(--border);
             border-radius: 0.5rem;
-            background: var(--bg-secondary);
+            background: var(--bg);
             color: var(--text);
             font-size: 1rem;
-            transition: all 0.2s ease;
+            min-width: 300px;
         }
 
         .search-input:focus {
@@ -139,8 +136,8 @@
 
         .filter-section {
             display: flex;
-            gap: 1rem;
             align-items: center;
+            gap: 1rem;
             flex-wrap: wrap;
         }
 
@@ -154,37 +151,29 @@
             font-size: 0.875rem;
             font-weight: 500;
             color: var(--text-secondary);
-            white-space: nowrap;
         }
 
-        select, input[type="checkbox"] {
-            padding: 0.5rem 0.75rem;
+        .filter-group select {
+            padding: 0.5rem;
             border: 1px solid var(--border);
             border-radius: 0.375rem;
-            background: var(--bg-secondary);
+            background: var(--bg);
             color: var(--text);
             font-size: 0.875rem;
         }
 
         .theme-toggle {
-            padding: 0.5rem 1rem;
+            background: var(--bg-tertiary);
             border: 1px solid var(--border);
-            border-radius: 0.375rem;
-            background: var(--bg-secondary);
-            color: var(--text);
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
             cursor: pointer;
-            transition: all 0.2s ease;
+            font-size: 1rem;
             margin-left: auto;
         }
 
-        .theme-toggle:hover {
-            background: var(--bg-tertiary);
-        }
-
         .results-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            margin-top: 1rem;
             font-size: 0.875rem;
             color: var(--text-secondary);
         }
@@ -192,7 +181,6 @@
         /* Main Content */
         .main {
             padding: 2rem 0;
-            min-height: 50vh;
         }
 
         /* States */
@@ -201,42 +189,31 @@
             padding: 4rem 2rem;
         }
 
+        .state .icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
         .state h3 {
+            font-size: 1.5rem;
             margin-bottom: 0.5rem;
             color: var(--text);
         }
 
         .state p {
             color: var(--text-secondary);
-        }
-
-        .loading .icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .error .icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            color: var(--error);
+            margin-bottom: 2rem;
         }
 
         .retry-btn {
-            margin-top: 1rem;
-            padding: 0.75rem 1.5rem;
             background: var(--primary);
             color: white;
             border: none;
+            padding: 0.75rem 1.5rem;
             border-radius: 0.5rem;
             cursor: pointer;
+            font-size: 1rem;
             font-weight: 500;
-            transition: all 0.2s ease;
         }
 
         .retry-btn:hover {
@@ -246,7 +223,7 @@
         /* Workflow Grid */
         .workflow-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
             gap: 1.5rem;
         }
 
@@ -255,59 +232,46 @@
             border: 1px solid var(--border);
             border-radius: 0.75rem;
             padding: 1.5rem;
+            box-shadow: var(--shadow);
             transition: all 0.2s ease;
             cursor: pointer;
             position: relative;
         }
 
         .workflow-card:hover {
-            border-color: var(--primary);
             box-shadow: var(--shadow-lg);
+            border-color: var(--primary);
             transform: translateY(-2px);
         }
 
         .workflow-header {
             display: flex;
+            align-items: center;
             justify-content: space-between;
-            align-items: flex-start;
             margin-bottom: 1rem;
-            gap: 1rem;
         }
 
         .workflow-meta {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-            flex: 1;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
         }
 
         .status-dot {
-            width: 0.75rem;
-            height: 0.75rem;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
-            flex-shrink: 0;
         }
 
-        .status-active {
-            background: var(--success);
-            animation: pulse-green 2s infinite;
-        }
-
-        .status-inactive {
-            background: var(--text-muted);
-        }
-
-        @keyframes pulse-green {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
-        }
+        .status-active { background: var(--success); }
+        .status-inactive { background: var(--text-muted); }
 
         .complexity-dot {
-            width: 0.5rem;
-            height: 0.5rem;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
-            flex-shrink: 0;
         }
 
         .complexity-low { background: var(--success); }
@@ -317,85 +281,216 @@
         .trigger-badge {
             background: var(--primary);
             color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 1rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
             font-size: 0.75rem;
             font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            white-space: nowrap;
         }
 
         .workflow-title {
-            font-size: 1.125rem;
+            font-size: 1.25rem;
             font-weight: 600;
             margin-bottom: 0.5rem;
             color: var(--text);
             line-height: 1.4;
-            overflow-wrap: break-word;
         }
 
         .workflow-description {
             color: var(--text-secondary);
-            font-size: 0.875rem;
-            line-height: 1.5;
             margin-bottom: 1rem;
-            overflow-wrap: break-word;
+            line-height: 1.5;
         }
 
         .workflow-integrations {
             margin-top: 1rem;
-            padding-top: 1rem;
-            border-top: 1px solid var(--border);
         }
 
         .integrations-title {
-            font-size: 0.75rem;
-            font-weight: 600;
+            font-size: 0.875rem;
+            font-weight: 500;
             color: var(--text-secondary);
             margin-bottom: 0.5rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
         }
 
         .integrations-list {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.5rem;
+            gap: 0.25rem;
         }
 
         .integration-tag {
             background: var(--bg-tertiary);
-            color: var(--text);
-            padding: 0.25rem 0.5rem;
+            color: var(--text-secondary);
+            padding: 0.125rem 0.5rem;
             border-radius: 0.25rem;
             font-size: 0.75rem;
+            border: 1px solid var(--border);
+        }
+
+        .workflow-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .action-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            background: var(--bg);
+            color: var(--text);
+            text-decoration: none;
+            font-size: 0.875rem;
             font-weight: 500;
-        }
-
-        .load-more {
-            text-align: center;
-            padding: 2rem 0;
-        }
-
-        .load-more-btn {
-            padding: 0.75rem 2rem;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 0.5rem;
             cursor: pointer;
-            font-weight: 500;
             transition: all 0.2s ease;
         }
 
-        .load-more-btn:hover:not(:disabled) {
+        .action-btn:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--primary);
+        }
+
+        .action-btn.primary {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .action-btn.primary:hover {
             background: var(--primary-dark);
         }
 
-        .load-more-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+        /* Load More */
+        .load-more {
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .load-more-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .load-more-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 1rem;
+        }
+
+        .modal-content {
+            background: var(--bg);
+            border-radius: 0.75rem;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.25rem;
+            color: var(--text-secondary);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .workflow-detail {
+            margin-bottom: 1rem;
+        }
+
+        .workflow-detail h4 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .copy-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .copy-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        .copy-btn.copied {
+            background: var(--success);
+        }
+
+        .copy-btn.copied:hover {
+            background: var(--success);
+        }
+
+        .json-viewer {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+            max-height: 400px;
+            white-space: pre-wrap;
         }
 
         .hidden {
@@ -552,10 +647,65 @@
                 </div>
             </div>
         </main>
+
+        <!-- Workflow Detail Modal -->
+        <div id="workflowModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title" id="modalTitle">Workflow Details</h2>
+                    <button class="modal-close" id="modalClose">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="workflow-detail">
+                        <h4>Description</h4>
+                        <p id="modalDescription">Loading...</p>
+                    </div>
+                    
+                    <div class="workflow-detail">
+                        <h4>Statistics</h4>
+                        <div id="modalStats">Loading...</div>
+                    </div>
+                    
+                    <div class="workflow-detail">
+                        <h4>Integrations</h4>
+                        <div id="modalIntegrations">Loading...</div>
+                    </div>
+                    
+                    <div class="workflow-detail">
+                        <h4>Actions</h4>
+                        <div class="workflow-actions">
+                            <a id="downloadBtn" class="action-btn primary" href="#" download>📥 Download JSON</a>
+                            <button id="viewJsonBtn" class="action-btn">📄 View JSON</button>
+                            <button id="viewDiagramBtn" class="action-btn">📊 View Diagram</button>
+                        </div>
+                    </div>
+                    
+                    <div class="workflow-detail hidden" id="jsonSection">
+                        <div class="section-header">
+                            <h4>Workflow JSON</h4>
+                            <button id="copyJsonBtn" class="copy-btn" title="Copy JSON to clipboard">
+                                📋 Copy
+                            </button>
+                        </div>
+                        <div class="json-viewer" id="jsonViewer">Loading...</div>
+                    </div>
+                    
+                    <div class="workflow-detail hidden" id="diagramSection">
+                        <div class="section-header">
+                            <h4>Workflow Diagram</h4>
+                            <button id="copyDiagramBtn" class="copy-btn" title="Copy diagram code to clipboard">
+                                📋 Copy
+                            </button>
+                        </div>
+                        <div id="diagramViewer">Loading diagram...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        // Simple, working JavaScript
+        // Enhanced Workflow App with Full Functionality
         class WorkflowApp {
             constructor() {
                 this.state = {
@@ -591,63 +741,61 @@
                     totalCount: document.getElementById('totalCount'),
                     activeCount: document.getElementById('activeCount'),
                     nodeCount: document.getElementById('nodeCount'),
-                    integrationCount: document.getElementById('integrationCount')
+                    integrationCount: document.getElementById('integrationCount'),
+                    // Modal elements
+                    workflowModal: document.getElementById('workflowModal'),
+                    modalTitle: document.getElementById('modalTitle'),
+                    modalClose: document.getElementById('modalClose'),
+                    modalDescription: document.getElementById('modalDescription'),
+                    modalStats: document.getElementById('modalStats'),
+                    modalIntegrations: document.getElementById('modalIntegrations'),
+                    downloadBtn: document.getElementById('downloadBtn'),
+                    viewJsonBtn: document.getElementById('viewJsonBtn'),
+                    viewDiagramBtn: document.getElementById('viewDiagramBtn'),
+                    jsonSection: document.getElementById('jsonSection'),
+                    jsonViewer: document.getElementById('jsonViewer'),
+                    diagramSection: document.getElementById('diagramSection'),
+                    diagramViewer: document.getElementById('diagramViewer'),
+                    copyJsonBtn: document.getElementById('copyJsonBtn'),
+                    copyDiagramBtn: document.getElementById('copyDiagramBtn')
                 };
                 
                 this.searchDebounceTimer = null;
+                this.currentWorkflow = null;
+                this.currentJsonData = null;
+                this.currentDiagramData = null;
                 this.init();
             }
             
             async init() {
-                this.loadTheme();
                 this.setupEventListeners();
-                await this.loadStats();
-                await this.loadWorkflows(true);
-            }
-            
-            loadTheme() {
-                const savedTheme = localStorage.getItem('theme') || 'light';
-                document.documentElement.setAttribute('data-theme', savedTheme);
-                this.elements.themeToggle.textContent = savedTheme === 'dark' ? '🌞' : '🌙';
-            }
-            
-            toggleTheme() {
-                const currentTheme = document.documentElement.getAttribute('data-theme');
-                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-                document.documentElement.setAttribute('data-theme', newTheme);
-                localStorage.setItem('theme', newTheme);
-                this.elements.themeToggle.textContent = newTheme === 'dark' ? '🌞' : '🌙';
+                this.setupTheme();
+                await this.loadInitialData();
             }
             
             setupEventListeners() {
-                // Search with debouncing
+                // Search and filters
                 this.elements.searchInput.addEventListener('input', (e) => {
-                    clearTimeout(this.searchDebounceTimer);
-                    this.searchDebounceTimer = setTimeout(() => {
-                        this.state.searchQuery = e.target.value;
-                        this.resetAndSearch();
-                    }, 300);
+                    this.state.searchQuery = e.target.value;
+                    this.debounceSearch();
                 });
                 
-                // Filters
                 this.elements.triggerFilter.addEventListener('change', (e) => {
                     this.state.filters.trigger = e.target.value;
+                    this.state.currentPage = 1;
                     this.resetAndSearch();
                 });
                 
                 this.elements.complexityFilter.addEventListener('change', (e) => {
                     this.state.filters.complexity = e.target.value;
+                    this.state.currentPage = 1;
                     this.resetAndSearch();
                 });
                 
                 this.elements.activeOnlyFilter.addEventListener('change', (e) => {
                     this.state.filters.activeOnly = e.target.checked;
+                    this.state.currentPage = 1;
                     this.resetAndSearch();
-                });
-                
-                // Theme toggle
-                this.elements.themeToggle.addEventListener('click', () => {
-                    this.toggleTheme();
                 });
                 
                 // Load more
@@ -657,46 +805,117 @@
                 
                 // Retry
                 this.elements.retryBtn.addEventListener('click', () => {
-                    this.loadWorkflows(true);
+                    this.loadInitialData();
+                });
+                
+                // Theme toggle
+                this.elements.themeToggle.addEventListener('click', () => {
+                    this.toggleTheme();
+                });
+                
+                // Modal events
+                this.elements.modalClose.addEventListener('click', () => {
+                    this.closeModal();
+                });
+                
+                this.elements.workflowModal.addEventListener('click', (e) => {
+                    if (e.target === this.elements.workflowModal) {
+                        this.closeModal();
+                    }
+                });
+                
+                this.elements.viewJsonBtn.addEventListener('click', () => {
+                    this.toggleJsonView();
+                });
+                
+                this.elements.viewDiagramBtn.addEventListener('click', () => {
+                    this.toggleDiagramView();
+                });
+                
+                // Copy button events
+                this.elements.copyJsonBtn.addEventListener('click', () => {
+                    this.copyToClipboard(this.currentJsonData, 'copyJsonBtn');
+                });
+                
+                this.elements.copyDiagramBtn.addEventListener('click', () => {
+                    this.copyToClipboard(this.currentDiagramData, 'copyDiagramBtn');
+                });
+                
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        this.closeModal();
+                    }
                 });
             }
             
-            async apiCall(endpoint) {
-                const response = await fetch(`/api${endpoint}`);
+            setupTheme() {
+                const savedTheme = localStorage.getItem('theme') || 'light';
+                document.documentElement.setAttribute('data-theme', savedTheme);
+                this.updateThemeToggle(savedTheme);
+            }
+            
+            toggleTheme() {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                this.updateThemeToggle(newTheme);
+            }
+            
+            updateThemeToggle(theme) {
+                this.elements.themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+            }
+            
+            debounceSearch() {
+                clearTimeout(this.searchDebounceTimer);
+                this.searchDebounceTimer = setTimeout(() => {
+                    this.state.currentPage = 1;
+                    this.resetAndSearch();
+                }, 300);
+            }
+            
+            async apiCall(endpoint, options = {}) {
+                const response = await fetch(`/api${endpoint}`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+                
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
-                return await response.json();
+                
+                return response.json();
             }
             
-            async loadStats() {
+            async loadInitialData() {
+                this.showState('loading');
+                
                 try {
-                    const stats = await this.apiCall('/stats');
+                    // Load stats and workflows in parallel
+                    const [stats, workflows] = await Promise.all([
+                        this.apiCall('/stats'),
+                        this.loadWorkflows(true)
+                    ]);
+                    
                     this.updateStatsDisplay(stats);
                 } catch (error) {
-                    console.error('Failed to load stats:', error);
-                    this.updateStatsDisplay({
-                        total: 0,
-                        active: 0,
-                        total_nodes: 0,
-                        unique_integrations: 0
-                    });
+                    this.showError('Failed to load data: ' + error.message);
                 }
             }
             
             async loadWorkflows(reset = false) {
-                if (this.state.isLoading) return;
-                
-                this.state.isLoading = true;
-                
                 if (reset) {
                     this.state.currentPage = 1;
                     this.state.workflows = [];
                 }
                 
+                this.state.isLoading = true;
+                
                 try {
-                    this.showState('loading');
-                    
                     const params = new URLSearchParams({
                         q: this.state.searchQuery,
                         trigger: this.state.filters.trigger,
@@ -770,6 +989,13 @@
             renderWorkflows() {
                 const html = this.state.workflows.map(workflow => this.createWorkflowCard(workflow)).join('');
                 this.elements.workflowGrid.innerHTML = html;
+                
+                // Add click handlers to cards
+                this.elements.workflowGrid.querySelectorAll('.workflow-card').forEach((card, index) => {
+                    card.addEventListener('click', () => {
+                        this.openWorkflowDetail(this.state.workflows[index]);
+                    });
+                });
             }
             
             createWorkflowCard(workflow) {
@@ -785,7 +1011,7 @@
                     : '';
                 
                 return `
-                    <div class="workflow-card">
+                    <div class="workflow-card" data-filename="${workflow.filename}">
                         <div class="workflow-header">
                             <div class="workflow-meta">
                                 <div class="status-dot ${statusClass}"></div>
@@ -809,6 +1035,109 @@
                         ` : ''}
                     </div>
                 `;
+            }
+            
+            async openWorkflowDetail(workflow) {
+                this.currentWorkflow = workflow;
+                this.elements.modalTitle.textContent = workflow.name;
+                this.elements.modalDescription.textContent = workflow.description;
+                
+                // Update stats
+                this.elements.modalStats.innerHTML = `
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                        <div><strong>Status:</strong> ${workflow.active ? 'Active' : 'Inactive'}</div>
+                        <div><strong>Trigger:</strong> ${workflow.trigger_type}</div>
+                        <div><strong>Complexity:</strong> ${workflow.complexity}</div>
+                        <div><strong>Nodes:</strong> ${workflow.node_count}</div>
+                    </div>
+                `;
+                
+                // Update integrations
+                if (workflow.integrations.length > 0) {
+                    this.elements.modalIntegrations.innerHTML = workflow.integrations
+                        .map(integration => `<span class="integration-tag">${this.escapeHtml(integration)}</span>`)
+                        .join(' ');
+                } else {
+                    this.elements.modalIntegrations.textContent = 'No integrations found';
+                }
+                
+                // Set download link
+                this.elements.downloadBtn.href = `/api/workflows/${workflow.filename}/download`;
+                this.elements.downloadBtn.download = workflow.filename;
+                
+                // Reset view states
+                this.elements.jsonSection.classList.add('hidden');
+                this.elements.diagramSection.classList.add('hidden');
+                
+                this.elements.workflowModal.classList.remove('hidden');
+            }
+            
+            closeModal() {
+                this.elements.workflowModal.classList.add('hidden');
+                this.currentWorkflow = null;
+                this.currentJsonData = null;
+                this.currentDiagramData = null;
+                
+                // Reset button states
+                this.elements.viewJsonBtn.textContent = '📄 View JSON';
+                this.elements.viewDiagramBtn.textContent = '📊 View Diagram';
+                
+                // Reset copy button states
+                this.resetCopyButton('copyJsonBtn');
+                this.resetCopyButton('copyDiagramBtn');
+            }
+            
+            async toggleJsonView() {
+                if (!this.currentWorkflow) return;
+                
+                const isVisible = !this.elements.jsonSection.classList.contains('hidden');
+                
+                if (isVisible) {
+                    this.elements.jsonSection.classList.add('hidden');
+                    this.elements.viewJsonBtn.textContent = '📄 View JSON';
+                } else {
+                    try {
+                        this.elements.jsonViewer.textContent = 'Loading...';
+                        this.elements.jsonSection.classList.remove('hidden');
+                        this.elements.viewJsonBtn.textContent = '📄 Hide JSON';
+                        
+                        const data = await this.apiCall(`/workflows/${this.currentWorkflow.filename}`);
+                        const jsonString = JSON.stringify(data.raw_json, null, 2);
+                        this.currentJsonData = jsonString;
+                        this.elements.jsonViewer.textContent = jsonString;
+                    } catch (error) {
+                        this.elements.jsonViewer.textContent = 'Error loading JSON: ' + error.message;
+                        this.currentJsonData = null;
+                    }
+                }
+            }
+            
+            async toggleDiagramView() {
+                if (!this.currentWorkflow) return;
+                
+                const isVisible = !this.elements.diagramSection.classList.contains('hidden');
+                
+                if (isVisible) {
+                    this.elements.diagramSection.classList.add('hidden');
+                    this.elements.viewDiagramBtn.textContent = '📊 View Diagram';
+                } else {
+                    try {
+                        this.elements.diagramViewer.textContent = 'Loading diagram...';
+                        this.elements.diagramSection.classList.remove('hidden');
+                        this.elements.viewDiagramBtn.textContent = '📊 Hide Diagram';
+                        
+                        const data = await this.apiCall(`/workflows/${this.currentWorkflow.filename}/diagram`);
+                        this.currentDiagramData = data.diagram;
+                        
+                        // Create a simple diagram display
+                        this.elements.diagramViewer.innerHTML = `
+                            <pre style="background: var(--bg-secondary); padding: 1rem; border-radius: 0.5rem; overflow-x: auto;">${this.escapeHtml(data.diagram)}</pre>
+                        `;
+                    } catch (error) {
+                        this.elements.diagramViewer.textContent = 'Error loading diagram: ' + error.message;
+                        this.currentDiagramData = null;
+                    }
+                }
             }
             
             updateLoadMoreButton() {
@@ -854,6 +1183,63 @@
                 const div = document.createElement('div');
                 div.textContent = text;
                 return div.innerHTML;
+            }
+            
+            async copyToClipboard(text, buttonId) {
+                if (!text) {
+                    console.warn('No content to copy');
+                    return;
+                }
+                
+                try {
+                    await navigator.clipboard.writeText(text);
+                    this.showCopySuccess(buttonId);
+                } catch (error) {
+                    // Fallback for older browsers
+                    this.fallbackCopyToClipboard(text, buttonId);
+                }
+            }
+            
+            fallbackCopyToClipboard(text, buttonId) {
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                textArea.style.top = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                
+                try {
+                    document.execCommand('copy');
+                    this.showCopySuccess(buttonId);
+                } catch (error) {
+                    console.error('Failed to copy text: ', error);
+                } finally {
+                    document.body.removeChild(textArea);
+                }
+            }
+            
+            showCopySuccess(buttonId) {
+                const button = document.getElementById(buttonId);
+                if (!button) return;
+                
+                const originalText = button.innerHTML;
+                button.innerHTML = '✅ Copied!';
+                button.classList.add('copied');
+                
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            }
+            
+            resetCopyButton(buttonId) {
+                const button = document.getElementById(buttonId);
+                if (!button) return;
+                
+                button.innerHTML = '📋 Copy';
+                button.classList.remove('copied');
             }
         }
 

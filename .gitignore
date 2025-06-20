@@ -45,3 +45,24 @@ test_*.json
 # Backup files
 *.bak
 *.backup
+
+# Workflow backup directories (created during renaming)
+workflow_backups/
+
+# Database files (SQLite)
+*.db
+*.sqlite
+*.sqlite3
+workflows.db
+
+# Rename logs
+workflow_rename_log.json
+
+# Node.js artifacts (if using npm)
+node_modules/
+package-lock.json
+
+# Python package files
+*.egg-info/
+dist/
+build/
