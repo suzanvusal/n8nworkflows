@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, field_validator
 from typing import Optional, List, Dict, Any
 import json
 import os
@@ -58,7 +58,8 @@ class WorkflowSummary(BaseModel):
         # Allow conversion of int to bool for active field
         validate_assignment = True
         
-    @validator('active', pre=True)
+    @field_validator('active', mode='before')
+    @classmethod
     def convert_active(cls, v):
         if isinstance(v, int):
             return bool(v)
@@ -185,14 +186,15 @@ async def get_workflow_detail(filename: str):
         # Get workflow metadata from database
         workflows, _ = db.search_workflows(f'filename:"{filename}"', limit=1)
         if not workflows:
-            raise HTTPException(status_code=404, detail="Workflow not found")
+            raise HTTPException(status_code=404, detail="Workflow not found in database")
         
         workflow_meta = workflows[0]
         
         # Load raw JSON from file
         file_path = os.path.join("workflows", filename)
         if not os.path.exists(file_path):
-            raise HTTPException(status_code=404, detail="Workflow file not found")
+            print(f"Warning: File {file_path} not found on filesystem but exists in database")
+            raise HTTPException(status_code=404, detail=f"Workflow file '{filename}' not found on filesystem")
         
         with open(file_path, 'r', encoding='utf-8') as f:
             raw_json = json.load(f)
@@ -209,15 +211,22 @@ async def get_workflow_detail(filename: str):
 @app.get("/api/workflows/{filename}/download")
 async def download_workflow(filename: str):
     """Download workflow JSON file."""
-    file_path = os.path.join("workflows", filename)
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="Workflow file not found")
-    
-    return FileResponse(
-        file_path,
-        media_type="application/json",
-        filename=filename
-    )
+    try:
+        file_path = os.path.join("workflows", filename)
+        if not os.path.exists(file_path):
+            print(f"Warning: Download requested for missing file: {file_path}")
+            raise HTTPException(status_code=404, detail=f"Workflow file '{filename}' not found on filesystem")
+        
+        return FileResponse(
+            file_path,
+            media_type="application/json",
+            filename=filename
+        )
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Workflow file '{filename}' not found")
+    except Exception as e:
+        print(f"Error downloading workflow {filename}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error downloading workflow: {str(e)}")
 
 @app.get("/api/workflows/{filename}/diagram")
 async def get_workflow_diagram(filename: str):
@@ -225,7 +234,8 @@ async def get_workflow_diagram(filename: str):
     try:
         file_path = os.path.join("workflows", filename)
         if not os.path.exists(file_path):
-            raise HTTPException(status_code=404, detail="Workflow file not found")
+            print(f"Warning: Diagram requested for missing file: {file_path}")
+            raise HTTPException(status_code=404, detail=f"Workflow file '{filename}' not found on filesystem")
         
         with open(file_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
@@ -237,7 +247,15 @@ async def get_workflow_diagram(filename: str):
         diagram = generate_mermaid_diagram(nodes, connections)
         
         return {"diagram": diagram}
+    except HTTPException:
+        raise
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Workflow file '{filename}' not found")
+    except json.JSONDecodeError as e:
+        print(f"Error parsing JSON in {filename}: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Invalid JSON in workflow file: {str(e)}")
     except Exception as e:
+        print(f"Error generating diagram for {filename}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error generating diagram: {str(e)}")
 
 def generate_mermaid_diagram(nodes: List[Dict], connections: Dict) -> str:
