@@ -81,17 +81,26 @@ python run.py
 ### Option 2: Development Mode
 ```bash
 # Start with auto-reload for development
-python api_server.py --reload
+python run.py --dev
 
 # Or specify custom host/port
-python api_server.py --host 0.0.0.0 --port 3000
+python run.py --host 0.0.0.0 --port 3000
+
+# Force database reindexing
+python run.py --reindex
 ```
 
 ### Import Workflows into n8n
-1. Open your [n8n Editor UI](https://docs.n8n.io/hosting/editor-ui/)
-2. Click **menu** (☰) → `Import workflow`
-3. Choose any `.json` file from the `workflows/` folder
-4. Update credentials/webhook URLs before running
+```bash
+# Use the Python importer (recommended)
+python import_workflows.py
+
+# Or manually import individual workflows:
+# 1. Open your n8n Editor UI
+# 2. Click menu (☰) → Import workflow
+# 3. Choose any .json file from the workflows/ folder
+# 4. Update credentials/webhook URLs before running
+```
 
 ---
 
