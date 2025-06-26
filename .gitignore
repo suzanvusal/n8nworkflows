@@ -81,3 +81,10 @@ workflow_rename_log.json
 # Node.js artifacts (if using npm)
 node_modules/
 package-lock.json
+
+#db
+*.db-shm
+*.db-wal
+
+# versions
+.python-version
