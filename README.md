@@ -25,6 +25,7 @@ http://localhost:8000
 - 🌙 **Dark/light themes** with system preference detection
 - 📊 **Live statistics** - 365 unique integrations, 29,445 total nodes
 - 🎯 **Smart categorization** by trigger type and complexity
+- 🎯 **Use case categorization** by service name mapped to categories
 - 📄 **On-demand JSON viewing** and download
 - 🔗 **Mermaid diagram generation** for workflow visualization
 - 🔄 **Real-time workflow naming** with intelligent formatting
@@ -55,6 +56,61 @@ Our intelligent naming system converts technical filenames into readable titles:
 - **After**: `Telegram Webhook Automation`
 - **100% meaningful names** with smart capitalization
 - **Automatic integration detection** from node analysis
+
+### Use Case Category ✨
+
+The search interface includes a dropdown filter that lets you browse 2,000+ workflows by category.
+
+The system includes an automated categorization feature that organizes workflows by service categories to make them easier to discover and filter.
+
+### How Categorization Works
+
+1. **Run the categorization script**
+   ```
+   python create_categories.py
+   ```
+
+2. **Service Name Recognition**
+   The script analyzes each workflow JSON filename to identify recognized service names (e.g., "Twilio", "Slack", "Gmail", etc.)
+
+3. **Category Mapping**
+   Each recognized service name is matched to its corresponding category using the definitions in `context/def_categories.json`. For example:
+   - Twilio → Communication & Messaging
+   - Gmail → Communication & Messaging  
+   - Airtable → Data Processing & Analysis
+   - Salesforce → CRM & Sales
+
+4. **Search Categories Generation**
+   The script produces a `search_categories.json` file that contains the categorized workflow data
+
+5. **Filter Interface**
+   Users can then filter workflows by category in the search interface, making it easier to find workflows for specific use cases
+
+### Available Categories
+
+The categorization system includes the following main categories:
+- AI Agent Development
+- Business Process Automation
+- Cloud Storage & File Management
+- Communication & Messaging
+- Creative Content & Video Automation
+- Creative Design Automation
+- CRM & Sales
+- Data Processing & Analysis
+- E-commerce & Retail
+- Financial & Accounting
+- Marketing & Advertising Automation
+- Project Management
+- Social Media Management
+- Technical Infrastructure & DevOps
+- Web Scraping & Data Extraction
+
+### Contribute Categories
+
+You can help expand the categorization by adding more service-to-category mappings (e.g., Twilio → Communication & Messaging) in context/defs_categories.json.
+
+Many workflow JSON files are conveniently named with the service name, often separated by underscores (_).
+
 
 ---
 
