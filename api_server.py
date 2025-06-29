@@ -361,12 +361,62 @@ async def get_integrations():
 
 @app.get("/api/categories")
 async def get_categories():
-    """Get available service categories for filtering."""
+    """Get available workflow categories for filtering."""
     try:
-        categories = db.get_service_categories()
-        return {"categories": categories}
+        # Try to load from the generated unique categories file
+        categories_file = Path("context/unique_categories.json")
+        if categories_file.exists():
+            with open(categories_file, 'r', encoding='utf-8') as f:
+                categories = json.load(f)
+            return {"categories": categories}
+        else:
+            # Fallback: extract categories from search_categories.json
+            search_categories_file = Path("context/search_categories.json")
+            if search_categories_file.exists():
+                with open(search_categories_file, 'r', encoding='utf-8') as f:
+                    search_data = json.load(f)
+                
+                unique_categories = set()
+                for item in search_data:
+                    if item.get('category'):
+                        unique_categories.add(item['category'])
+                    else:
+                        unique_categories.add('Uncategorized')
+                
+                categories = sorted(list(unique_categories))
+                return {"categories": categories}
+            else:
+                # Last resort: return basic categories
+                return {"categories": ["Uncategorized"]}
+                
     except Exception as e:
+        print(f"Error loading categories: {e}")
         raise HTTPException(status_code=500, detail=f"Error fetching categories: {str(e)}")
+
+@app.get("/api/category-mappings")
+async def get_category_mappings():
+    """Get filename to category mappings for client-side filtering."""
+    try:
+        search_categories_file = Path("context/search_categories.json")
+        if not search_categories_file.exists():
+            return {"mappings": {}}
+        
+        with open(search_categories_file, 'r', encoding='utf-8') as f:
+            search_data = json.load(f)
+        
+        # Convert to a simple filename -> category mapping
+        mappings = {}
+        for item in search_data:
+            filename = item.get('filename')
+            category = item.get('category') or 'Uncategorized'
+            if filename:
+                mappings[filename] = category
+        
+        return {"mappings": mappings}
+        
+    except Exception as e:
+        print(f"Error loading category mappings: {e}")
+        raise HTTPException(status_code=500, detail=f"Error fetching category mappings: {str(e)}")
 
 @app.get("/api/workflows/category/{category}", response_model=SearchResponse)
 async def search_workflows_by_category(
