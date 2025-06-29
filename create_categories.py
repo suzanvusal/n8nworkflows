@@ -75,6 +75,25 @@ def main():
     
     print(f"Generated search_categories.json with {len(search_categories)} entries")
     
+    # Generate unique categories list for API
+    unique_categories = set()
+    for item in search_categories:
+        if item['category']:
+            unique_categories.add(item['category'])
+    
+    # Always include 'Uncategorized' for workflows without categories
+    unique_categories.add('Uncategorized')
+    
+    # Sort categories alphabetically
+    categories_list = sorted(list(unique_categories))
+    
+    # Write unique categories to a separate file for API consumption
+    categories_output_path = Path("context/unique_categories.json")
+    with open(categories_output_path, 'w', encoding='utf-8') as f:
+        json.dump(categories_list, f, indent=2, ensure_ascii=False)
+    
+    print(f"Generated unique_categories.json with {len(categories_list)} categories")
+    
     # Print some statistics
     categorized = sum(1 for item in search_categories if item['category'])
     uncategorized = len(search_categories) - categorized
