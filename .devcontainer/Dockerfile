@@ -71,8 +71,13 @@ RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/
   -x
 
 # Install Python packages and create symlink
-RUN pip3 install --upgrade pip && \
-  pip3 install black flake8 isort && \
+# Fix for PEP 668 "externally-managed-environment" error in Python 3.11+
+# The --break-system-packages flag is safe to use in this devcontainer environment
+# because we're in an isolated container where system package conflicts won't
+# affect the host system. This allows pip to install packages globally within
+# the container, which is the expected behavior for development environments.
+RUN pip3 install --upgrade pip --break-system-packages && \
+  pip3 install black flake8 isort --break-system-packages && \
   ln -sf /usr/bin/python3 /usr/local/bin/python
 
 # Install Claude
