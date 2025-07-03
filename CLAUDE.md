@@ -106,3 +106,7 @@ When assisting with this repository:
 - n8n version: [Specify the n8n version these workflows are compatible with]
 - Last updated: [Date of last major update]
 - Migration notes: [Any version-specific considerations]
+
+---
+
+[中文](./CLAUDE_ZH.md)
