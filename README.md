@@ -454,3 +454,7 @@ This comprehensive collection includes workflows from:
 *This repository represents the most comprehensive and well-organized collection of n8n workflows available, featuring cutting-edge search technology and professional documentation that makes workflow discovery and usage a delightful experience.*
 
 **🎯 Perfect for**: Developers, automation engineers, business analysts, and anyone looking to streamline their workflows with proven n8n automations.
+
+---
+
+[中文](./README_ZH.md)
