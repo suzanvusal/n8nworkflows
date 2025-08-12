@@ -1,20 +1,20 @@
 import json
 import os
 from pathlib import Path
+import glob
+import re
 
 def load_def_categories():
     """Load the definition categories from def_categories.json"""
     def_categories_path = Path("context/def_categories.json")
     with open(def_categories_path, 'r', encoding='utf-8') as f:
-        categories_data = json.load(f)
-    
-    # Create a mapping from integration name (lowercase) to category
-    integration_to_category = {}
-    for item in categories_data:
-        integration = item['integration'].lower()
-        category = item['category']
-        integration_to_category[integration] = category
-    
+        raw_map = json.load(f)
+
+    # Normalize keys: strip non-alphanumerics and lowercase
+    integration_to_category = {
+        re.sub(r"[^a-z0-9]", "", item["integration"].lower()): item["category"]
+        for item in raw_map
+    }
     return integration_to_category
 
 def extract_tokens_from_filename(filename):
@@ -33,15 +33,115 @@ def extract_tokens_from_filename(filename):
 def find_matching_category(tokens, integration_to_category):
     """Find the first matching category for the given tokens"""
     for token in tokens:
-        if token in integration_to_category:
-            return integration_to_category[token]
+        # Normalize token same as keys
+        norm = re.sub(r"[^a-z0-9]", "", token.lower())
+        if norm in integration_to_category:
+            return integration_to_category[norm]
     
     # Try partial matches for common variations
     for token in tokens:
-        for integration in integration_to_category:
-            if token in integration or integration in token:
-                return integration_to_category[integration]
+        norm = re.sub(r"[^a-z0-9]", "", token.lower())
+        for integration_key in integration_to_category:
+            if norm in integration_key or integration_key in norm:
+                return integration_to_category[integration_key]
     
+    return ""
+
+def categorize_by_filename(filename):
+    """
+    Categorize workflow based on filename patterns.
+    Returns the most likely category or None if uncertain.
+    """
+    filename_lower = filename.lower()
+    
+    # Security & Authentication
+    if any(word in filename_lower for word in ['totp', 'bitwarden', 'auth', 'security']):
+        return "Technical Infrastructure & DevOps"
+
+    # Data Processing & File Operations
+    if any(word in filename_lower for word in ['process', 'writebinaryfile', 'readbinaryfile', 'extractfromfile', 'converttofile', 'googlefirebasecloudfirestore', 'supabase', 'surveymonkey', 'renamekeys', 'readpdf', 'wufoo', 'splitinbatches', 'airtop', 'comparedatasets', 'spreadsheetfile']):
+        return "Data Processing & Analysis"
+
+    # Utility & Business Process Automation
+    if any(word in filename_lower for word in ['noop', 'code', 'schedule', 'filter', 'splitout', 'wait', 'limit', 'aggregate', 'acuityscheduling', 'eventbrite', 'philipshue', 'stickynote', 'n8ntrainingcustomerdatastore', 'n8n']):
+        return "Business Process Automation"
+
+    # Webhook & API related
+    if any(word in filename_lower for word in ['webhook', 'respondtowebhook', 'http', 'rssfeedread']):
+        return "Web Scraping & Data Extraction"
+
+    # Form & Data Collection
+    if any(word in filename_lower for word in ['form', 'typeform', 'jotform']):
+        return "Data Processing & Analysis"
+
+    # Local file operations
+    if any(word in filename_lower for word in ['localfile', 'filemaker']):
+        return "Cloud Storage & File Management"
+
+    # Database operations
+    if any(word in filename_lower for word in ['postgres', 'mysql', 'mongodb', 'redis', 'elasticsearch', 'snowflake']):
+        return "Data Processing & Analysis"
+
+    # AI & Machine Learning
+    if any(word in filename_lower for word in ['openai', 'awstextract', 'awsrekognition', 'humanticai', 'openthesaurus', 'googletranslate', 'summarize']):
+        return "AI Agent Development"
+
+    # E-commerce specific
+    if any(word in filename_lower for word in ['woocommerce', 'gumroad']):
+        return "E-commerce & Retail"
+
+    # Social media specific
+    if any(word in filename_lower for word in ['facebook', 'linkedin', 'instagram']):
+        return "Social Media Management"
+
+    # Customer support
+    if any(word in filename_lower for word in ['zendesk', 'intercom', 'drift', 'pagerduty']):
+        return "Communication & Messaging"
+
+    # Analytics & Tracking
+    if any(word in filename_lower for word in ['googleanalytics', 'segment', 'mixpanel']):
+        return "Data Processing & Analysis"
+
+    # Development tools
+    if any(word in filename_lower for word in ['git', 'github', 'gitlab', 'travisci', 'jenkins', 'uptimerobot', 'gsuiteadmin', 'debughelper', 'bitbucket']):
+        return "Technical Infrastructure & DevOps"
+
+    # CRM & Sales tools
+    if any(word in filename_lower for word in ['pipedrive', 'hubspot', 'salesforce', 'copper', 'orbit', 'agilecrm']):
+        return "CRM & Sales"
+
+    # Marketing tools
+    if any(word in filename_lower for word in ['mailchimp', 'convertkit', 'sendgrid', 'mailerlite', 'lemlist', 'sendy', 'postmark', 'mailgun']):
+        return "Marketing & Advertising Automation"
+
+    # Project management
+    if any(word in filename_lower for word in ['asana', 'mondaycom', 'clickup', 'trello', 'notion', 'toggl', 'microsofttodo', 'calendly', 'jira']):
+        return "Project Management"
+
+    # Communication
+    if any(word in filename_lower for word in ['slack', 'telegram', 'discord', 'mattermost', 'twilio', 'emailreadimap', 'teams', 'gotowebinar']):
+        return "Communication & Messaging"
+
+    # Cloud storage
+    if any(word in filename_lower for word in ['dropbox', 'googledrive', 'onedrive', 'awss3', 'googledocs']):
+        return "Cloud Storage & File Management"
+
+    # Creative tools
+    if any(word in filename_lower for word in ['canva', 'figma', 'bannerbear', 'editimage']):
+        return "Creative Design Automation"
+
+    # Video & content
+    if any(word in filename_lower for word in ['youtube', 'vimeo', 'storyblok', 'strapi']):
+        return "Creative Content & Video Automation"
+
+    # Financial tools
+    if any(word in filename_lower for word in ['stripe', 'chargebee', 'quickbooks', 'harvest']):
+        return "Financial & Accounting"
+
+    # Weather & external APIs
+    if any(word in filename_lower for word in ['openweathermap', 'nasa', 'crypto', 'coingecko']):
+        return "Web Scraping & Data Extraction"
+
     return ""
 
 def main():
@@ -50,13 +150,17 @@ def main():
     
     # Get all JSON files from workflows directory
     workflows_dir = Path("workflows")
-    json_files = list(workflows_dir.glob("*.json"))
+    json_files = glob.glob(
+        os.path.join(workflows_dir, "**", "*.json"),
+        recursive=True
+    ) 
     
     # Process each file
     search_categories = []
     
     for json_file in json_files:
-        filename = json_file.name
+        path_obj = Path(json_file)
+        filename = path_obj.name
         tokens = extract_tokens_from_filename(filename)
         category = find_matching_category(tokens, integration_to_category)
         
@@ -64,6 +168,11 @@ def main():
             "filename": filename,
             "category": category
         })
+
+    # Second pass for categorization
+    for item in search_categories:
+        if not item['category']:
+            item['category'] = categorize_by_filename(item['filename'])
     
     # Sort by filename for consistency
     search_categories.sort(key=lambda x: x['filename'])
